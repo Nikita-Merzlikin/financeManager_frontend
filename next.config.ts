@@ -1,0 +1,20 @@
+import type { NextConfig } from "next";
+
+/** Set in GitHub Pages deploy, e.g. `/financeManager_frontend` */
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/$/, "") || "";
+
+const nextConfig: NextConfig = {
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
+  ...(basePath
+    ? {
+        basePath,
+        assetPrefix: basePath,
+      }
+    : {}),
+};
+
+export default nextConfig;
