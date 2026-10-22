@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { AccountsList } from "@/components/dashboard/AccountsList";
 import { CategoryBreakdown } from "@/components/dashboard/CategoryBreakdown";
 import { DailyChart } from "@/components/dashboard/DailyChart";
@@ -9,63 +10,43 @@ import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { getDashboard } from "@/lib/api/dashboard";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/context";
-import { fromInputDate, toInputDate } from "@/lib/format";
-import type { Dashboard } from "@/lib/types";
+import { fromInputDate, toInputDate } from "@/lib/dates";
+import { queryKeys } from "@/lib/query/keys";
 
 type Range = { from: string; to: string };
 
 export function DashboardView() {
   const { logout } = useAuth();
-  const [data, setData] = useState<Dashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<Range>({ from: "", to: "" });
+  const [draft, setDraft] = useState<Range | null>(null);
   const [applied, setApplied] = useState<Range | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const query = useQuery({
+    queryKey: queryKeys.dashboard(applied?.from, applied?.to),
+    queryFn: () => {
+      const params =
+        applied?.from && applied?.to
+          ? {
+              from: fromInputDate(applied.from),
+              to: fromInputDate(applied.to, true),
+            }
+          : {};
+      return getDashboard(params);
+    },
+  });
 
-    async function fetchDashboard() {
-      try {
-        const query =
-          applied?.from && applied?.to
-            ? {
-                from: fromInputDate(applied.from),
-                to: fromInputDate(applied.to, true),
-              }
-            : {};
-        const dashboard = await getDashboard(query);
-        if (cancelled) return;
-        setData(dashboard);
-        setDraft({
-          from: toInputDate(dashboard.period.from),
-          to: toInputDate(dashboard.period.to),
-        });
-        setError(null);
-      } catch (err) {
-        if (cancelled) return;
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load dashboard",
-        );
-        if (err instanceof ApiError && err.status === 401) {
-          await logout();
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
+  if (query.error instanceof ApiError && query.error.status === 401) {
+    void logout();
+  }
 
-    void fetchDashboard();
-    return () => {
-      cancelled = true;
-    };
-  }, [applied, logout]);
+  const data = query.data;
+  const from =
+    draft?.from ?? (data ? toInputDate(data.period.from) : "");
+  const to = draft?.to ?? (data ? toInputDate(data.period.to) : "");
 
   return (
     <div className="dashboard-shell">
-      <header className="dashboard-header">
+      <header className="page-header">
         <div>
-          <p className="brand-mark">Ledgerly</p>
           <h1>Dashboard</h1>
           {data ? (
             <p className="period-hint">
@@ -73,29 +54,23 @@ export function DashboardView() {
             </p>
           ) : null}
         </div>
-        <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
-          Log out
-        </button>
       </header>
 
       <PeriodFilter
-        from={draft.from}
-        to={draft.to}
+        from={from}
+        to={to}
         onChange={setDraft}
-        onApply={() => {
-          setLoading(true);
-          setApplied({ ...draft });
-        }}
+        onApply={() => setApplied({ from, to })}
       />
 
-      {loading ? <p className="status-line">Loading dashboard…</p> : null}
-      {error ? (
+      {query.isLoading ? <p className="status-line">Loading dashboard…</p> : null}
+      {query.error ? (
         <p className="form-error" role="alert">
-          {error}
+          {query.error instanceof Error ? query.error.message : "Failed to load"}
         </p>
       ) : null}
 
-      {data && !loading ? (
+      {data && !query.isLoading ? (
         <>
           <SummaryCards
             balance={data.balance}

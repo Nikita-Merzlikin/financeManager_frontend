@@ -58,29 +58,47 @@ function formatErrorMessage(body: ApiErrorBody | null, fallback: string): string
   return Array.isArray(body.message) ? body.message.join(", ") : body.message;
 }
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
-  const { body, auth = true, retry = true, headers, ...rest } = options;
-  const tokens = getTokens();
-
+function buildHeaders(
+  headers: HeadersInit | undefined,
+  auth: boolean,
+  body: unknown,
+): Headers {
   const reqHeaders = new Headers(headers);
-  if (!reqHeaders.has("Content-Type") && body !== undefined) {
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+  if (!isFormData && !reqHeaders.has("Content-Type") && body !== undefined) {
     reqHeaders.set("Content-Type", "application/json");
   }
   if (!reqHeaders.has("x-lang")) reqHeaders.set("x-lang", "uk");
   if (!reqHeaders.has("client-type")) reqHeaders.set("client-type", "client");
   if (!reqHeaders.has("Currency")) reqHeaders.set("Currency", "UAH");
 
-  if (auth && tokens?.accessToken) {
-    reqHeaders.set("Authorization", `Bearer ${tokens.accessToken}`);
+  if (auth) {
+    const tokens = getTokens();
+    if (tokens?.accessToken) {
+      reqHeaders.set("Authorization", `Bearer ${tokens.accessToken}`);
+    }
   }
+
+  return reqHeaders;
+}
+
+function encodeBody(body: unknown): BodyInit | undefined {
+  if (body === undefined) return undefined;
+  if (typeof FormData !== "undefined" && body instanceof FormData) return body;
+  return JSON.stringify(body);
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const { body, auth = true, retry = true, headers, ...rest } = options;
 
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
-    headers: reqHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: buildHeaders(headers, auth, body),
+    body: encodeBody(body),
   });
 
   if (res.status === 401 && auth && retry) {
@@ -120,6 +138,35 @@ export async function apiRequest<T>(
   }
 
   return parsed as T;
+}
+
+/** Raw authenticated fetch for streams (SSE). Retries once after refresh on 401. */
+export async function apiFetch(
+  path: string,
+  options: RequestOptions = {},
+): Promise<Response> {
+  const { body, auth = true, retry = true, headers, ...rest } = options;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...rest,
+    headers: buildHeaders(headers, auth, body),
+    body: encodeBody(body),
+  });
+
+  if (res.status === 401 && auth && retry) {
+    if (!refreshPromise) {
+      refreshPromise = refreshTokens().finally(() => {
+        refreshPromise = null;
+      });
+    }
+    const refreshed = await refreshPromise;
+    if (refreshed) {
+      return apiFetch(path, { ...options, retry: false });
+    }
+    throw new ApiError(401, "Session expired. Please sign in again.");
+  }
+
+  return res;
 }
 
 export function getApiUrl(): string {
