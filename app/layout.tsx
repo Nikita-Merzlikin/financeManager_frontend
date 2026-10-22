@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/context";
+import { AppQueryProvider } from "@/lib/query/provider";
 import "./globals.css";
 
 const display = Fraunces({
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${display.variable} ${sans.variable} h-full`}
     >
       <body className="min-h-full antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AppQueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </AppQueryProvider>
       </body>
     </html>
   );

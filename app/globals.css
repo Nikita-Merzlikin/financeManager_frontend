@@ -83,6 +83,187 @@ h2 {
   padding: 1.5rem;
 }
 
+.app-shell {
+  display: grid;
+  gap: 1.25rem;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+}
+
+.app-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.nav-link {
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, white);
+  text-decoration: none;
+}
+
+.app-content,
+.page-shell {
+  display: grid;
+  gap: 1.25rem;
+  animation: rise 420ms ease-out;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.stack-form {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tx-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.tx-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.tab.active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, white);
+  background: color-mix(in srgb, var(--accent) 10%, white);
+}
+
+.chat-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.chat-log {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 280px;
+  max-height: 55vh;
+  overflow: auto;
+}
+
+.chat-bubble {
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  max-width: 85%;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.user {
+  justify-self: end;
+  background: color-mix(in srgb, var(--accent) 18%, white);
+}
+
+.chat-bubble.assistant {
+  justify-self: start;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+}
+
+.chat-bubble.status {
+  justify-self: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  background: transparent;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.chat-form input {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+}
+
+.ai-box {
+  margin: 0.85rem 0 0;
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, white);
+  white-space: pre-wrap;
+}
+
+.plan-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 0.85rem;
+}
+
 .auth-shell {
   display: grid;
   place-items: center;
@@ -127,7 +308,8 @@ h2 {
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -137,7 +319,8 @@ h2 {
   font: inherit;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 2px solid color-mix(in srgb, var(--accent) 35%, white);
   border-color: var(--accent);
 }
@@ -150,6 +333,13 @@ h2 {
   font-weight: 600;
   cursor: pointer;
   transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .btn:disabled {
@@ -419,11 +609,13 @@ h2 {
 }
 
 @media (max-width: 900px) {
-  .summary-grid {
+  .summary-grid,
+  .plan-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-grid {
+  .dashboard-grid,
+  .two-col {
     grid-template-columns: 1fr;
   }
 

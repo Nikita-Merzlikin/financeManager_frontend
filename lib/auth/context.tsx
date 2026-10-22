@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import * as authApi from "@/lib/api/auth";
 import { clearTokens, getTokens, setTokens } from "@/lib/auth/storage";
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getServerAuthSnapshot,
   );
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const login = useCallback(
     async (dto: LoginDto) => {
@@ -87,10 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local session even if logout request fails
     } finally {
       clearTokens();
+      queryClient.clear();
       emitAuthChange();
       router.replace("/login");
     }
-  }, [router]);
+  }, [queryClient, router]);
 
   const value = useMemo(
     () => ({ status, login, register, logout }),
